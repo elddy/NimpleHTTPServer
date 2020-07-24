@@ -71,9 +71,9 @@ proc `status=`(s: HTTPServer, value: bool) {.inline.} =
     s.status = value
 
 #[
-    printToConsole error or success with nice and colored output
+    Print error or success with nice and colored output
 ]#
-proc printToConsole*(STATUS, text: string) =
+proc print(STATUS, text: string) =
     if STATUS == "error":
         stdout.styledWrite(fgRed, "[-] ")
     elif STATUS == "success":
@@ -99,7 +99,7 @@ proc stopServer*(s: HTTPServer) {.inline.} =
             stopSocket.close()
         s.status = false
     else:
-        printToConsole("error", "The server is not running")
+        print("error", "The server is not running")
 
 #[
     Stops the server thread if timeout declared
@@ -127,7 +127,7 @@ proc startServer*(s: HTTPServer) {.inline.} =
 ]#
 proc joinServer*(s: HTTPServer) {.inline.} =
     if not s.status:
-        printToConsole("error", "The server is not running")
+        print("error", "The server is not running")
     while s.status:
         continue
 
@@ -137,7 +137,7 @@ proc joinServer*(s: HTTPServer) {.inline.} =
 proc validateFile(file: string): bool =
     if existsFile(file):
         return true
-    printToConsole("error", file & "not exist")
+    print("error", file & "not exist")
     return false
 
 #[
@@ -186,7 +186,7 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
     socket.setSockOpt(OptReuseAddr, true)
     socket.bindAddr(Port(s.port))
     socket.listen()
-    printToConsole("loading", "Listening on port: " & $(s.port))
+    print("loading", "Listening on port: " & $(s.port))
     
     # Check incoming connections
     while true:
@@ -205,13 +205,13 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
                 rec = client.recvLine(timeout=1000)
                 # Check if stop
                 if rec.contains("stop") and address == "127.0.0.1":
-                    printToConsole("loading", "Server stopped")
+                    print("loading", "Server stopped")
                     socket.close()
                     return
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
                     requestedFile = requestedFile.split("HTTP")[0]
-                    printToConsole("loading", address & " requested: " & requestedFile)
+                    print("loading", address & " requested: " & requestedFile)
                 msg &= "\n" & rec
             except:
                 stop = true
