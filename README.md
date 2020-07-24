@@ -5,3 +5,8 @@ SimpleHTTPServer module for Nim
 ```
 nimble install https://github.com/Hydra820/NimpleHTTPServer
 ```
+
+## Usage
+```Nim
+import NimpleHTTPServer
+```
