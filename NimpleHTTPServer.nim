@@ -111,6 +111,7 @@ proc timeOutStop(s: HTTPServer) {.thread.} =
         while runTime < s.timeout:
             runtime = cpuTime() - runtime    
         s.stopServer()
+        s.status = false
 
 #[
     Start the thread server
@@ -208,7 +209,7 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
                 if rec.contains("stop") and address == "127.0.0.1":
                     print("loading", "Server stopped")
                     socket.close()
-                    stopped = true
+                    s.status = false
                     return
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
