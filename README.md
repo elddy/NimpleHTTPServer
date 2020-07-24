@@ -1,5 +1,5 @@
 # NimpleHTTPServer
-SimpleHTTPServer module for Nim - #### For Files Only
+SimpleHTTPServer module for Nim - **For Files Only**
 
 ## Install
 ```
