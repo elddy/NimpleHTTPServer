@@ -33,7 +33,7 @@ proc `status=`(s: HTTPServer, value: bool) {.inline.}
 # Public functions
 proc stopServer*(s: HTTPServer) {.inline.}
 proc startServer*(s: HTTPServer) {.inline.}
-proc joinServer*(s: HTTPServer): bool {.inline.}
+proc joinServer*(s: ptr HTTPServer) {.inline.}
 
 # Private functions
 proc timeOutStop(s: HTTPServer) {.thread.}
@@ -126,13 +126,11 @@ proc startServer*(s: HTTPServer) {.inline.} =
 #[
     Stop everything and wait for the server to end
 ]#
-proc joinServer*(s: HTTPServer): bool {.inline.} =
+proc joinServer*(s: ptr HTTPServer) {.inline.} =
     if not s.status:
         print("error", "The server is not running")
-        return false
-    return joinServer(s)
-    # while not stopped:
-    #     continue
+    while s.status:
+        continue
 
 #[
     Validate file existence
