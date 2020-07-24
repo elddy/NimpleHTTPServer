@@ -10,7 +10,7 @@ import net, asyncdispatch, asynchttpserver, strutils, os, times, terminal
 type
   HTTPServer* = ref object of RootObj
     port: int
-    timeout: float # in seconds
+    timeout: int # in seconds
     status: bool
 
 # In working http request
@@ -23,8 +23,8 @@ var
 ]#
 
 # Initialize functions
-proc timeout*(s: HTTPServer): float {.inline.}
-proc `timeout=`*(s: var HTTPServer, value: float) {.inline.}
+proc timeout*(s: HTTPServer): int {.inline.}
+proc `timeout=`*(s: var HTTPServer, value: int) {.inline.}
 proc port*(s: HTTPServer): int {.inline.}
 proc `port=`*(s: var HTTPServer, value: int) {.inline.}
 proc status*(s: HTTPServer): bool {.inline.}
@@ -55,11 +55,11 @@ proc port*(s: HTTPServer): int {.inline.} =
   ## getter of port
   s.port
 
-proc `timeout=`*(s: var HTTPServer, value: float) {.inline.} =
+proc `timeout=`*(s: var HTTPServer, value: int) {.inline.} =
   ## setter of timeout
   s.timeout = value
 
-proc timeout*(s: HTTPServer): float {.inline.} =
+proc timeout*(s: HTTPServer): int {.inline.} =
   ## getter of timeout
   s.timeout
 
@@ -107,9 +107,9 @@ proc stopServer*(s: HTTPServer) {.inline.} =
 ]#
 proc timeOutStop(s: HTTPServer) {.thread.} =
     if s.timeout > 0:
-        var runtime = cpuTime()
+        var runtime = now().second
         while runTime < s.timeout:
-            runtime = cpuTime() - runtime    
+            runtime = now().second - runtime    
         s.stopServer()
         s.status = false
 
