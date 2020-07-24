@@ -107,9 +107,11 @@ proc stopServer*(s: HTTPServer) {.inline.} =
 ]#
 proc timeOutStop(s: HTTPServer) {.thread.} =
     if s.timeout > 0:
-        var runtime = now().second
-        while runTime < s.timeout:
-            runtime = now().second - runtime    
+        var 
+            runtime = toInt(getTime().toSeconds())
+            diff = 0
+        while diff < s.timeout:
+            diff = toInt(getTime().toSeconds()) - runtime    
         s.stopServer()
         s.status = false
 
