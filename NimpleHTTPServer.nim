@@ -16,7 +16,7 @@ type
 # In working http request
 var 
     inWorking = false
-    stopped = false
+    stopped {.threadvar.}: bool
 
 #[ 
     Declaration of functions
@@ -33,7 +33,7 @@ proc `status=`(s: HTTPServer, value: bool) {.inline.}
 # Public functions
 proc stopServer*(s: HTTPServer) {.inline.}
 proc startServer*(s: HTTPServer) {.inline.}
-proc joinServer*(s: ptr HTTPServer) {.inline.}
+proc joinServer*(s: HTTPServer) {.inline.}
 
 # Private functions
 proc timeOutStop(s: HTTPServer) {.thread.}
@@ -126,10 +126,10 @@ proc startServer*(s: HTTPServer) {.inline.} =
 #[
     Stop everything and wait for the server to end
 ]#
-proc joinServer*(s: ptr HTTPServer) {.inline.} =
+proc joinServer*(s: HTTPServer) {.inline.} =
     if not s.status:
         print("error", "The server is not running")
-    while s.status:
+    while not stopped:
         continue
 
 #[
