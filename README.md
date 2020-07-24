@@ -49,3 +49,9 @@ server.startServer() # Start the server as a thread
 # After 3 seconds...
 # Server stopped automatically
 ```
+
+## Compile
+Compile only with:
+```
+--threads:on --opt:speed
+```
