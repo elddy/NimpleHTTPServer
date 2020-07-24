@@ -28,7 +28,7 @@ proc `timeout=`*(s: var HTTPServer, value: float) {.inline.}
 proc port*(s: HTTPServer): int {.inline.}
 proc `port=`*(s: var HTTPServer, value: int) {.inline.}
 proc status*(s: HTTPServer): bool {.inline.}
-proc `status=`(s: HTTPServer, value: bool) {.inline.}
+proc `status=`*(s: HTTPServer, value: bool) {.inline.}
 
 # Public functions
 proc stopServer*(s: HTTPServer) {.inline.}
@@ -67,7 +67,7 @@ proc status*(s: HTTPServer): bool {.inline.} =
     ## getter of status
     s.status
 
-proc `status=`(s: HTTPServer, value: bool) {.inline.} = 
+proc `status=`*(s: HTTPServer, value: bool) {.inline.} = 
     ## getter of status
     s.status = value
 
@@ -130,7 +130,7 @@ proc startServer*(s: HTTPServer) {.inline.} =
 proc joinServer*(s: HTTPServer) {.inline.} =
     if not s.status:
         print("error", "The server is not running")
-    while not stopped:
+    while s.status:
         continue
 
 #[
