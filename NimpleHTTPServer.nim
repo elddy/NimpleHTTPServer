@@ -16,6 +16,7 @@ type
 # In working http request
 var 
     inWorking = false
+    stopped = false
 
 #[ 
     Declaration of functions
@@ -128,7 +129,7 @@ proc startServer*(s: HTTPServer) {.inline.} =
 proc joinServer*(s: HTTPServer) {.inline.} =
     if not s.status:
         print("error", "The server is not running")
-    while s.status:
+    while not stopped:
         continue
 
 #[
@@ -207,6 +208,7 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
                 if rec.contains("stop") and address == "127.0.0.1":
                     print("loading", "Server stopped")
                     socket.close()
+                    stopped = true
                     return
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
