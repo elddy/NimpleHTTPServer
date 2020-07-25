@@ -33,7 +33,7 @@ proc `status=`*(s: HTTPServer, value: bool) {.inline.}
 # Public functions
 proc stopServer*(s: HTTPServer) {.inline.}
 proc startServer*(s: HTTPServer) {.inline.}
-proc joinServer*(s: HTTPServer) {.inline.}
+proc joinServer*(s: HTTPServer)
 
 # Private functions
 proc timeOutStop(s: HTTPServer) {.thread.}
@@ -135,9 +135,10 @@ proc startServer*(s: HTTPServer) {.inline.} =
 #[
     Stop everything and wait for the server to end
 ]#
-proc joinServer*(s: HTTPServer) {.inline.} =
+proc joinServer*(s: HTTPServer) =
     if not s.status:
         print("error", "The server is not running")
+    echo "Waiting"
     while s.status:
         continue
     # s.status = false
