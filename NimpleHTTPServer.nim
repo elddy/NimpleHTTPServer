@@ -65,9 +65,13 @@ proc timeout*(s: HTTPServer): int {.inline.} =
 
 proc status*(s: HTTPServer): bool {.inline.} =
     ## getter of status
+    if stopped:
+        s.status = false
+    else:
+        s.status = true
     s.status
 
-proc `status=`*(s: HTTPServer, value: bool) {.inline.} = 
+proc `status=`(s: HTTPServer, value: bool) {.inline.} = 
     ## getter of status
     s.status = value
 
@@ -121,6 +125,7 @@ proc timeOutStop(s: HTTPServer) {.thread.} =
 ]#
 proc startServer*(s: HTTPServer) {.inline.} =
     s.status = true
+    stopped = false
     # Start thread
     var thr: array[0..1, Thread[HTTPServer]]
     createThread(thr[0], startHTTPServer, s)
