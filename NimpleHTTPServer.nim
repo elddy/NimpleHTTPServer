@@ -138,11 +138,7 @@ proc startServer*(s: HTTPServer) {.inline.} =
 proc joinServer*(s: HTTPServer) =
     if not s.status:
         print("error", "The server is not running")
-    echo "Waiting for thread"
     joinThreads(thr)
-    # while thr[0].running:
-    #     continue
-    s.status = false
 
 #[
     Validate file existence
@@ -221,7 +217,6 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
                     print("loading", "Server stopped")
                     socket.close()
                     s.status = false
-                    stopped = true
                     return
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
