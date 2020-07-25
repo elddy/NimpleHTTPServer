@@ -138,9 +138,9 @@ proc startServer*(s: HTTPServer) {.inline.} =
 proc joinServer*(s: HTTPServer) {.inline.} =
     if not s.status:
         print("error", "The server is not running")
-    while not stopped:
+    while s.status:
         continue
-    s.status = false
+    # s.status = false
 
 #[
     Validate file existence
