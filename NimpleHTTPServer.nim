@@ -139,8 +139,9 @@ proc joinServer*(s: HTTPServer) =
     if not s.status:
         print("error", "The server is not running")
     echo "Waiting for thread"
-    while thr[0].running:
-        continue
+    joinThreads(thr)
+    # while thr[0].running:
+    #     continue
     s.status = false
 
 #[
