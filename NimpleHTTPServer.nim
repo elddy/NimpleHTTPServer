@@ -16,7 +16,7 @@ type
 # In working http request
 var 
     inWorking = false
-    stopped {.threadvar.}: bool
+    stopped {.global.}: bool
 
 #[ 
     Declaration of functions
@@ -99,6 +99,7 @@ proc stopServer*(s: HTTPServer) {.inline.} =
         finally:
             stopSocket.close()
         s.status = false
+        stopped = true
     else:
         print("error", "The server is not running")
 
@@ -132,8 +133,9 @@ proc startServer*(s: HTTPServer) {.inline.} =
 proc joinServer*(s: HTTPServer) {.inline.} =
     if not s.status:
         print("error", "The server is not running")
-    while s.status:
+    while not stopped:
         continue
+    s.status = false
 
 #[
     Validate file existence
@@ -212,6 +214,7 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
                     print("loading", "Server stopped")
                     socket.close()
                     s.status = false
+                    stopped = true
                     return
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
