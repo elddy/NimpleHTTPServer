@@ -17,6 +17,7 @@ type
 var 
     inWorking = false
     stopped {.global.}: bool
+    thr: array[0..1, Thread[HTTPServer]]
 
 #[ 
     Declaration of functions
@@ -127,7 +128,6 @@ proc startServer*(s: HTTPServer) {.inline.} =
     s.status = true
     stopped = false
     # Start thread
-    var thr: array[0..1, Thread[HTTPServer]]
     createThread(thr[0], startHTTPServer, s)
     createThread(thr[1], timeOutStop, s)
     sleep(1) # Needed
@@ -138,10 +138,10 @@ proc startServer*(s: HTTPServer) {.inline.} =
 proc joinServer*(s: HTTPServer) =
     if not s.status:
         print("error", "The server is not running")
-    echo "Waiting"
-    while s.status:
+    echo "Waiting for thread"
+    while thr[0].running:
         continue
-    # s.status = false
+    s.status = false
 
 #[
     Validate file existence
