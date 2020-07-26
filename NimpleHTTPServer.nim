@@ -73,6 +73,7 @@ proc timeOutStop(s: HttpServer) {.thread.} =
             diff = getTime().toUnix() - runtime    
         s.stop()
         s.status = false
+        stopped = true
 
 # Forward declaration for startHttpServer
 proc startHttpServer(s: HttpServer) {.thread.}
@@ -92,6 +93,7 @@ proc join*(s: HttpServer) =
     if not s.status:
         print("error", "The server is not running")
     joinThreads(thr)
+    s.status = false
 
 proc validateFile(file: string): bool =
     ## Validate file existence
@@ -183,6 +185,8 @@ proc startHttpServer(s: HttpServer) {.thread.} =
 
 when isMainModule:
     # Starts the http server and runs it for 30 seconds with 15 second timeout
-    let server = newHttpServer(8080)
+    var server = newHttpServer(8080, 3)
     server.start()
-    server.join()
+    
+    # sleep(5000)
+    echo server.status
