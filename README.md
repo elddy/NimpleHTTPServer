@@ -33,9 +33,6 @@ Set timeout to the server:
 ```Nim
 import NimpleHTTPServer
 
-var server: HTTPServer
-new server
-
 # Init server with timeout of 3 seconds
 let server = newHttpServer(8080, 3)
 
