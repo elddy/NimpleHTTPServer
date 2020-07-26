@@ -3,6 +3,9 @@
     Compile only with: --threads:on --opt:speed
 ]##
 
+when not compileOption("threads"):
+  {.error: "This module requires the --threads:on option.".}
+
 # Imports
 import net, httpcore, strutils, os, times, terminal
 
