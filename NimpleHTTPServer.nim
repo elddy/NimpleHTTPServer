@@ -16,7 +16,7 @@ type
         timeout: int # in seconds
         status: bool
 
-proc newHttpServer*(port: int, timeout = 60): HttpServer = 
+proc newHttpServer*(port: int, timeout = 0): HttpServer = 
     ## Create a new HttpServer instance with the specified
     ## `port` and `timeout`
     result = HttpServer(port: port, timeout: timeout)
@@ -183,6 +183,6 @@ proc startHttpServer(s: HttpServer) {.thread.} =
 
 when isMainModule:
     # Starts the http server and runs it for 30 seconds with 15 second timeout
-    let server = newHttpServer(8080, 15)
+    let server = newHttpServer(8080)
     server.start()
-    sleep(30000)
+    server.join()
