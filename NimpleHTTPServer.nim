@@ -1,85 +1,42 @@
-#[
+##[
     Simple HTTP server with net sockets
     Compile only with: --threads:on --opt:speed
-]#
+]##
+
+when not compileOption("threads"):
+  {.error: "This module requires the --threads:on option.".}
 
 # Imports
-import net, asyncdispatch, asynchttpserver, strutils, os, times, terminal
+import net, httpcore, strutils, os, times, terminal
 
-# Type HTTPServer
+# Type HttpServer
 type
-  HTTPServer* = ref object of RootObj
-    port: int
-    timeout: int # in seconds
-    status: bool
+    HttpServer* = ref object
+        port: int
+        timeout: int # in seconds
+        status: bool
+
+proc newHttpServer*(port: int, timeout = 60): HttpServer = 
+    ## Create a new HttpServer instance with the specified
+    ## `port` and `timeout`
+    result = HttpServer(port: port, timeout: timeout)
 
 # In working http request
 var 
     inWorking = false
     stopped {.global.}: bool
-    thr: array[0..1, Thread[HTTPServer]]
+    thr: array[0..1, Thread[HttpServer]]
 
-#[ 
-    Declaration of functions
-]#
-
-# Initialize functions
-proc timeout*(s: HTTPServer): int {.inline.}
-proc `timeout=`*(s: var HTTPServer, value: int) {.inline.}
-proc port*(s: HTTPServer): int {.inline.}
-proc `port=`*(s: var HTTPServer, value: int) {.inline.}
-proc status*(s: HTTPServer): bool {.inline.}
-proc `status=`*(s: HTTPServer, value: bool) {.inline.}
-
-# Public functions
-proc stopServer*(s: HTTPServer) {.inline.}
-proc startServer*(s: HTTPServer) {.inline.}
-proc joinServer*(s: HTTPServer)
-
-# Private functions
-proc timeOutStop(s: HTTPServer) {.thread.}
-proc validateFile(file: string): bool
-proc startHTTPServer(s: HTTPServer) {.thread.}
-
-# Help functions
-proc addHeaders(msg: var string, headers: HttpHeaders)
-proc buildHTTPResponse(code: HttpCode, content: string, headers: HttpHeaders = nil): string
-
-#[
-    Init functions
-]#
-proc `port=`*(s: var HTTPServer, value: int) {.inline.} =
-  ## setter of port
-  s.port = value
-
-proc port*(s: HTTPServer): int {.inline.} =
-  ## getter of port
-  s.port
-
-proc `timeout=`*(s: var HTTPServer, value: int) {.inline.} =
-  ## setter of timeout
-  s.timeout = value
-
-proc timeout*(s: HTTPServer): int {.inline.} =
-  ## getter of timeout
-  s.timeout
-
-proc status*(s: HTTPServer): bool {.inline.} =
-    ## getter of status
+proc status*(s: HttpServer): bool =
+    ## Get status of the HttpServer
     if stopped:
         s.status = false
     else:
         s.status = true
     s.status
 
-proc `status=`(s: HTTPServer, value: bool) {.inline.} = 
-    ## getter of status
-    s.status = value
-
-#[
-    Print error or success with nice and colored output
-]#
 proc print(STATUS, text: string) =
+    ## Prints error or success with nice and coloured output
     if STATUS == "error":
         stdout.styledWrite(fgRed, "[-] ")
     elif STATUS == "success":
@@ -90,10 +47,8 @@ proc print(STATUS, text: string) =
         stdout.styledWrite(fgYellow, "[!] ")
     stdout.write(text & "\n")
 
-#[
-    Stops the server
-]#
-proc stopServer*(s: HTTPServer) {.inline.} =
+proc stop*(s: HttpServer) =
+    ## Stops the server
     if s.status:
         var stopSocket = newSocket()
         try:
@@ -108,43 +63,40 @@ proc stopServer*(s: HTTPServer) {.inline.} =
     else:
         print("error", "The server is not running")
 
-#[
-    Stops the server thread if timeout declared
-]#
-proc timeOutStop(s: HTTPServer) {.thread.} =
+proc timeOutStop(s: HttpServer) {.thread.} =
+    ## Stops the server thread after the timeout
     if s.timeout > 0:
         var 
-            runtime = toInt(getTime().toSeconds())
-            diff = 0
+            runtime = getTime().toUnix()
+            diff = 0'i64
         while diff < s.timeout:
-            diff = toInt(getTime().toSeconds()) - runtime    
-        s.stopServer()
+            diff = getTime().toUnix() - runtime    
+        s.stop()
         s.status = false
 
-#[
-    Start the thread server
-]#
-proc startServer*(s: HTTPServer) {.inline.} =
+# Forward declaration for startHttpServer
+proc startHttpServer(s: HttpServer) {.thread.}
+
+
+proc start*(s: HttpServer) =
+    ## Start the server threads
     s.status = true
     stopped = false
     # Start thread
-    createThread(thr[0], startHTTPServer, s)
+    createThread(thr[0], startHttpServer, s)
     createThread(thr[1], timeOutStop, s)
     sleep(1) # Needed
 
-#[
-    Stop everything and wait for the server to end
-]#
-proc joinServer*(s: HTTPServer) =
+proc join*(s: HttpServer) =
+    ## Stop everything and wait for the server to end
     if not s.status:
         print("error", "The server is not running")
     joinThreads(thr)
 
-#[
-    Validate file existence
-]#
 proc validateFile(file: string): bool =
-    if existsFile(file):
+    ## Validate file existence
+    echo repr file
+    if fileExists(file):
         return true
     print("error", file & "not exist")
     return false
@@ -154,19 +106,14 @@ proc validateFile(file: string): bool =
     ***************
 ]#
 
-#[
-    Add headers to http response
-]#
 proc addHeaders(msg: var string, headers: HttpHeaders) =
-  for k, v in headers:
-    msg.add(k & ": " & v & "\c\L")
+    ## Add headers to the HTTP response
+    for k, v in headers:
+        msg.add(k & ": " & v & "\c\L")
 
-#[
-    Build full http response
-]#
 proc buildHTTPResponse(code: HttpCode, content: string,
               headers: HttpHeaders = nil): string =
-
+    ## Build the full HTTP response
     var msg = "HTTP/1.1 " & $code & "\c\L"
 
     if headers != nil:
@@ -183,15 +130,11 @@ proc buildHTTPResponse(code: HttpCode, content: string,
     msg.add content
     return msg
 
-#[
-    Function thread.
-    Starts the http server and handle the requests.
-]#
-proc startHTTPServer(s: HTTPServer) {.thread.} =
-
+proc startHttpServer(s: HttpServer) {.thread.} =
+    ## Thread procedure - starts the HTTP server and handles the
+    ## incoming requests
     # Socket init
     var socket = newSocket()
-    socket = newSocket()
     socket.setSockOpt(OptReuseAddr, true)
     socket.bindAddr(Port(s.port))
     socket.listen()
@@ -220,7 +163,7 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
                     return
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
-                    requestedFile = requestedFile.split("HTTP")[0]
+                    requestedFile = requestedFile.split("HTTP")[0].strip()
                     print("loading", address & " requested: " & requestedFile)
                 msg &= "\n" & rec
             except:
@@ -236,8 +179,10 @@ proc startHTTPServer(s: HTTPServer) {.thread.} =
             discard
         client.close()
         inWorking = false
-                 
 
 
-
-
+when isMainModule:
+    # Starts the http server and runs it for 30 seconds with 15 second timeout
+    let server = newHttpServer(8080, 15)
+    server.start()
+    sleep(30000)
