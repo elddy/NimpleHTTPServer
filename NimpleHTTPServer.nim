@@ -13,13 +13,17 @@ import net, httpcore, strutils, os, times, terminal
 type
     HttpServer* = ref object
         port: int
-        timeout: int # in seconds
         status: bool
+        content: string # custom content
+        timeout: int # in seconds
 
-proc newHttpServer*(port: int, timeout = 0): HttpServer = 
+
+proc newHttpServer*(port: int, content = "", timeout = 0): HttpServer = 
     ## Create a new HttpServer instance with the specified
-    ## `port` and `timeout`
-    result = HttpServer(port: port, timeout: timeout)
+    ## `port`, `timeout` and `content`
+    ## If content is provided, then the server will serve the content
+    ## no matter what the client asks for
+    result = HttpServer(port: port, content: content, timeout: timeout)
 
 # In working http request
 var 
@@ -55,7 +59,7 @@ proc stop*(s: HttpServer) =
             stopSocket.connect("localhost", Port(s.port))
             stopSocket.send("stop" & "\r\L")
         except:
-            discard
+            print("error", "The server is not running")
         finally:
             stopSocket.close()
         s.status = false
@@ -157,12 +161,12 @@ proc startHttpServer(s: HttpServer) {.thread.} =
         while not stop:
             try:
                 rec = client.recvLine(timeout=1000)
-                # Check if stop
+                ## Check if stop
                 if rec.contains("stop") and address == "127.0.0.1":
                     print("loading", "Server stopped")
                     socket.close()
                     s.status = false
-                    return
+                    return                
                 if rec.contains("GET"):
                     requestedFile = rec.split("GET /")[1]
                     requestedFile = requestedFile.split("HTTP")[0].strip()
@@ -170,13 +174,15 @@ proc startHttpServer(s: HttpServer) {.thread.} =
                 msg &= "\n" & rec
             except:
                 stop = true
-
-        if validateFile(requestedFile):
-            let content = readFile(requestedFile)
-            response = $(buildHTTPResponse(Http200, content, newHttpHeaders()))
+        if s.content == "":
+            if validateFile(requestedFile):
+                let content = readFile(requestedFile)
+                response = $(buildHTTPResponse(Http200, content, newHttpHeaders()))
+            else:
+                response = $(buildHTTPResponse(Http404, "File not found", newHttpHeaders()))
         else:
-            response = $(buildHTTPResponse(Http404, "File not found", newHttpHeaders()))
-        
+            response = $(buildHTTPResponse(Http200, s.content, newHttpHeaders()))
+
         if client.trySend(response):
             discard
         client.close()
@@ -185,8 +191,9 @@ proc startHttpServer(s: HttpServer) {.thread.} =
 
 when isMainModule:
     # Starts the http server and runs it for 30 seconds with 15 second timeout
-    var server = newHttpServer(8080, 3)
+    var server = newHttpServer(8080)
     server.start()
     
-    # sleep(5000)
+
+    server.join()
     echo server.status
